@@ -150,7 +150,7 @@ Load the appropriate reference files for this platform:
 - [ ] PDF links include file type and size in link text (e.g. "Annual Report (PDF, 2MB)") — WCAG 2.4.4
 - [ ] PDFs on the site: flag untagged/scanned PDFs — tagged PDF required for screen reader access (PDF/UA / WCAG 1.1.1)
 - [ ] PDF document language is set, tables have proper TR/TH/TD tag structure, images have Alt entries — check PDF source if available — WCAG 1.3.1 / 3.1.1
-- [ ] `[MANUAL] Modals/dialogs trap focus and return focus on close` — requires runtime; check for `aria-modal="true"` and `role="dialog"` as static indicators
+- [ ] Modals/dialogs: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, close button `aria-label`, Escape handler, `.focus()` on open/close, `aria-hidden` on background — see `references/additional-checks.md` for full checklist — WCAG 2.1.1 / 2.1.2 / 4.1.2
 - [ ] Custom widgets (dropdowns, sliders, tabs, accordions) have correct ARIA: `role`, `aria-expanded`, `aria-controls`, `aria-selected` — WCAG 4.1.2
 - [ ] Carousels and auto-rotating banners have pause controls — WCAG 2.2.2
 

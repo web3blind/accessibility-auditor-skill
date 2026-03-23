@@ -41,21 +41,65 @@ When a site links to or serves PDF files, check these in the HTML context:
 
 ---
 
-## German BITV 2.0 — Unique HTML Requirements
+## Modals and Dialogs — Accessible Pattern Checks
 
-> **Note:** Only apply these checks when the site is explicitly a German federal or state government site subject to BITV 2.0. Skip for all other sites — these checks will generate false negatives on non-German sites.
+Applies to any site with modal windows, dialog boxes, popups, drawers.
 
-Check presence of:
+**Role and labelling (WCAG 4.1.2):**
+```html
+<!-- Required: role="dialog" or role="alertdialog" (for destructive/urgent) -->
+<div role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <h2 id="modal-title">Confirm deletion</h2>
+  ...
+</div>
+```
+- `role="dialog"` or `role="alertdialog"` must be present
+- `aria-labelledby` pointing to visible heading, OR `aria-label` if no visible title
+- `aria-modal="true"` signals to screen readers that background is inert
 
-- **Sign language video (DGS):** A Deutsche Gebärdensprache video explaining the site's content and navigation. Look for: `<video>` element, or link to DGS video, typically on homepage or in accessibility statement.
-  ```html
-  <!-- Should exist somewhere on the page: -->
-  <video> <!-- DGS overview video --> </video>
-  <!-- or a clearly labelled link to it -->
-  ```
-- **Easy language section (Leichte Sprache):** A page or section with simplified text. Look for: link labelled "Leichte Sprache" or "Einfache Sprache" in navigation.
+**Focus management (WCAG 2.1.2):**
+```javascript
+// On open — focus must move INTO the dialog:
+modal.querySelector('button, [href], input, [tabindex]').focus();
+// or set tabindex="-1" on container and call .focus() on it
 
-Flag as missing only if auditing a confirmed German government site under BITV 2.0.
+// On close — focus must RETURN to the trigger element:
+triggerButton.focus();
+```
+- Flag: modal opens without any `.focus()` call in JS near open logic
+- Flag: no `tabindex="-1"` on modal container when it has no focusable children
+
+**Keyboard interaction (WCAG 2.1.1):**
+- Escape key closes the modal — check for `keydown` handler with `key === 'Escape'`
+- Tab/Shift+Tab cycle only within the modal (focus trap) — check for focus trap logic
+- Flag: no Escape key handler found near modal open/close logic
+
+**Close button (WCAG 4.1.2):**
+```html
+<!-- Bad — icon-only, no name: -->
+<button>×</button>
+
+<!-- Good: -->
+<button aria-label="Close dialog">×</button>
+```
+
+**Background inertness (WCAG 1.3.1):**
+```html
+<!-- When modal is open, background content must be hidden from AT: -->
+<div id="main-content" aria-hidden="true">...</div>
+<!-- Modern alternative: -->
+<main inert>...</main>
+```
+- Flag: no `aria-hidden="true"` or `inert` on background when modal is open
+
+**Quick static checklist:**
+- `role="dialog"` or `role="alertdialog"` present ✓
+- `aria-modal="true"` on container ✓
+- `aria-labelledby` or `aria-label` with title ✓
+- Close button has `aria-label` ✓
+- `Escape` key handler in JS ✓
+- `.focus()` called on open and close ✓
+- Background gets `aria-hidden="true"` or `inert` on open ✓
 
 ---
 
