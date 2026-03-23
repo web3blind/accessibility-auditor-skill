@@ -78,10 +78,9 @@ Load the appropriate reference files for this platform:
 - `references/web-checklist.md` for websites and Electron
 - `references/mobile-checklist.md` for Android/iOS/Flutter/React Native
 - `references/desktop-checklist.md` for native desktop (PyQt, wxWidgets, WPF)
-- `references/gost-checklist.md` for Russian government sites (GOST R 52872-2019, Mincifry order)
+- `references/gost-checklist.md` for Russian government sites
 - `references/wcag-criteria.md` for WCAG 2.1 criterion-level detail
 - `references/tools.md` for tooling recommendations
-- `references/international-standards.md` for jurisdiction-specific standards (EU, USA, UK, Canada, Australia, Japan, Germany, France, gaming, PDF, AI)
 
 ---
 
@@ -293,22 +292,6 @@ Russian government sites are governed by:
 2. Mincifry order (Приказ Минцифры) — see `references/gost-checklist.md`
 
 These mostly map to WCAG 2.1 AA requirements with some specific additions.
-
-### On International Jurisdiction
-Always check `references/international-standards.md` to identify which law applies:
-- **EU public sector** → EN 301 549 (WCAG 2.1 AA)
-- **EU private sector (from Jun 2025)** → European Accessibility Act (WCAG 2.1 AA via EN 301 549)
-- **USA federal** → Section 508 (WCAG 2.0 AA + hardware/software extras)
-- **USA state/local govt** → ADA Title II 2024 (WCAG 2.1 AA)
-- **UK public sector** → Public Sector Bodies Regulations 2018 (WCAG 2.1 AA)
-- **France** → RGAA 4.1 — mention mandatory accessibility declaration and fines
-- **Germany federal** → BITV 2.0 — flag required sign language video (DGS) and easy language
-- **Canada Ontario** → AODA (WCAG 2.0 AA + policy/training requirements)
-- **Japan govt** → JIS X 8341-3:2016 (WCAG 2.0 AA)
-- **Australia govt** → DDA + Digital Service Standard (WCAG 2.1 AA)
-- **PDF documents** → PDF/UA ISO 14289-1
-- **Video games** → Game Accessibility Guidelines (gameaccessibilityguidelines.com)
-- **VR/AR** → XR Association Developers Guide
 
 ### On Completeness
 If the target is large (many pages/files), focus on:
