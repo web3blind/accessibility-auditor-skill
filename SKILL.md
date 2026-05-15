@@ -1,36 +1,108 @@
 ---
 name: accessibility-auditor
-description: Comprehensive accessibility audit for websites (WCAG 2.1, GOST R 52872-2019), GitHub repos, and local projects. Also covers mobile (Android/iOS/Flutter/React Native) and desktop (Electron/PyQt) source code static analysis.
+description: Comprehensive accessibility audit for websites, repositories, local projects, and app source code. Uses WCAG 2.1 / 2.2 references, GOST R 52872-2019, and platform-specific checklists with graceful degradation across different agent runtimes.
 triggers:
   - audit accessibility
   - check accessibility
+  - accessibility audit
+  - accessibility check
+  - analyse accessibility
+  - WCAG audit
+  - audit a11y
   - аудит доступности
   - проверить доступность
-  - analyse accessibility
-  - accessibility audit
-  - WCAG audit
-  - ГОСТ доступность
-  - проверь доступность сайта
-  - accessibility check
   - проверить сайт на доступность
+  - ГОСТ доступность
 ---
 
 # Accessibility Auditor Skill
 
-Performs comprehensive accessibility audits on:
-- **Websites** — via URL (any public site)
+Performs structured accessibility audits on:
+- **Websites** — public URLs
 - **GitHub repositories** — source code analysis
 - **Local project folders** — source code analysis
-- **Mobile apps** — Android/iOS/Flutter/React Native source (static)
-- **Desktop apps** — Electron/PyQt/wxWidgets source (static)
+- **Mobile apps** — Android, iOS, Flutter, React Native source (static-first)
+- **Desktop apps** — Electron, WPF/XAML, PyQt/PySide, wxWidgets, GTK source (static-first)
+
+The skill is designed to be **portable across agent runtimes**.
+It should describe **what to inspect and what to report**, not depend on one vendor's tool names.
+
+## Core Operating Rules
+
+1. **Use the best capabilities already available in the current environment first.**
+2. **Prefer useful partial results over hard failure.**
+3. **If deeper checks need more tooling, either:**
+   - use approved tools already present in the environment, or
+   - if installs are allowed in the current runtime, extend only from the approved audit-tool allowlist below, or
+   - otherwise recommend the exact tools for a deeper follow-up pass.
+4. **Do not install arbitrary tools outside the approved allowlist.**
+5. **Always report what was checked, what was not checked, and why.**
+6. **For native mobile/desktop apps, be explicit that static analysis is partial.**
+
+## Capability Model
+
+When this skill says to inspect something, the runtime may satisfy that with different tools. Think in capabilities:
+
+- **Fetch page content** — retrieve the content of a public page or document
+- **Render in browser** — load a JS-heavy page or interactive flow when static fetch is insufficient
+- **Read source files** — open relevant code and markup files directly
+- **Search source files** — find files by extension and locate relevant patterns
+- **Run local audit tools** — only if they are already available or approved for optional installation
+- **Report evidence** — quote files, elements, selectors, code patterns, and coverage limits clearly
+
+Do not require a specific tool name when a capability is enough.
+
+## Approved Optional Audit-Tool Allowlist
+
+Use existing environment capabilities first.
+If richer checks are needed and the runtime allows extension, prefer the smallest approved tool that unlocks the missing check.
+
+### Web / browser-based
+- `@axe-core/cli`
+- `pa11y`
+- `lighthouse`
+- `playwright`
+
+### Source inspection helpers
+- `ripgrep` / `rg`
+- framework linters already standard for the target stack
+
+### Android
+- Android Lint
+- Accessibility Test Framework (ATF)
+
+### iOS
+- Xcode Accessibility Inspector
+- XCTest accessibility audit support
+- SwiftLint with accessibility-focused custom rules
+
+### Flutter
+- `accessibility_lints`
+- built-in Flutter semantics testing
+
+### React Native
+- `eslint-plugin-react-native-a11y`
+- `eslint-plugin-jsx-a11y`
+
+### Desktop
+- `axe-windows`
+- Accessibility Insights for Windows
+- `accerciser`
+- `pyatspi`
+- `dogtail`
+
+Policy:
+- do not install anything outside this list from inside the skill
+- prefer already-installed tools over new installs
+- if installs are disallowed or inappropriate for the environment, continue with a partial audit and recommend the relevant tools explicitly
 
 ## Quick Start
 
 The user provides one of:
-- A URL: `https://example.com`
-- A GitHub repo: `https://github.com/user/repo`
-- A local path: `/home/user/myapp` or `./myapp`
-- Multiple targets at once
+- a URL: `https://example.com`
+- a GitHub repo: `https://github.com/user/repo`
+- a local path: `/home/user/myapp` or `./myapp`
+- multiple targets at once
 
 Then follow the workflow below.
 
@@ -39,149 +111,176 @@ Then follow the workflow below.
 ## Step 1: Detect Input Type and Gather Data
 
 ### Website (URL)
-1. Use `web_extract([url])` to get page content
-2. If site requires JavaScript, use `browser_navigate` + `browser_snapshot(full=True)`
-3. Also check secondary pages: /about, /contact, any linked pages
-4. Note: you cannot "run" accessibility scanners — analyze the HTML/CSS yourself
+1. Fetch the page content.
+2. If the site is JS-heavy or critical UI is missing from static content, render it in a browser-capable environment.
+3. Inspect a few important secondary pages when relevant: `/about`, `/contact`, key forms, pricing, sign-in, checkout, docs, or any user-critical flow.
+4. If automated audit tools are already available, use them as supporting evidence — not as the only source of truth.
 
 ### GitHub Repository
-1. Use `web_extract(["https://github.com/user/repo"])` for README and main page
-2. Fetch relevant source files:
-   - For web projects: look for HTML, CSS, JS/JSX/TSX files
-   - For mobile: look for layout XML (Android), Swift/SwiftUI, Dart, JS (React Native)
-   - For desktop: look for PyQt, wxWidgets, Electron HTML
-3. Use `web_extract` on raw file URLs:
-   `https://raw.githubusercontent.com/user/repo/main/path/to/file`
-4. Check if there's an existing accessibility statement or docs
+1. Inspect the repo entry point (README, docs, package files, platform folders).
+2. Fetch or read relevant source files:
+   - web: HTML, CSS, JS/JSX/TSX
+   - Android: XML, Kotlin, Java
+   - iOS: Swift, SwiftUI, ObjC
+   - Flutter: Dart
+   - React Native: JS/TSX
+   - desktop: Electron HTML/JS, XAML, Python GUI files, GTK-related files
+3. Check whether the repo already mentions accessibility, testing, semantics, ARIA, screen reader support, or compliance.
+4. If the repo is large, prioritize entry points and key user flows.
 
 ### Local Folder
-1. Use `search_files(pattern="*.html", path="/path")` to find relevant files
-2. Use `read_file` to read source files
-3. Prioritize: HTML/JSX/TSX, layout XML (Android), Swift/Dart files
-4. Check package.json / pubspec.yaml / build.gradle for accessibility deps
+1. Search for relevant files by extension and framework structure.
+2. Read the most important source files directly.
+3. Prioritize entry points, reusable components, forms, navigation, dialogs, and key workflows.
+4. Check package/config/build files for accessibility-related dependencies or test tooling.
 
 ---
 
-## Step 2: Identify Platform and Framework
+## Step 2: Identify Platform and Load the Right References
 
-Determine what you're auditing:
-- **Web** → HTML/CSS/JS, check WCAG 2.1 + GOST checklist
-- **Android** → layout XML + Kotlin/Java, check mobile checklist
-- **iOS** → Swift/SwiftUI/ObjC, check mobile checklist
-- **Flutter** → Dart widget files, check mobile checklist
-- **React Native** → JS/TSX files, check mobile checklist
-- **Electron** → HTML/CSS/JS (same as web + Electron specifics)
-- **PyQt/wxWidgets** → Python files, limited static analysis possible
-- **WPF/XAML** → XAML files (similar to Android XML, high viability)
+Determine what is being audited:
+- **Web** → HTML/CSS/JS, check WCAG 2.1 / 2.2 + Russian compliance when relevant
+- **Android** → layout XML + Kotlin/Java, use mobile checklist
+- **iOS** → Swift/SwiftUI/ObjC, use mobile checklist
+- **Flutter** → Dart widget files, use mobile checklist
+- **React Native** → JS/TSX files, use mobile checklist
+- **Electron** → web checklist + desktop caveats
+- **PyQt/PySide / wxWidgets / GTK / WPF/XAML** → desktop checklist
 
-Load the appropriate reference files for this platform:
-- `references/web-checklist.md` for websites and Electron
-- `references/mobile-checklist.md` for Android/iOS/Flutter/React Native
-- `references/desktop-checklist.md` for native desktop (PyQt, wxWidgets, WPF)
-- `references/gost-checklist.md` for Russian government sites
-- `references/wcag-criteria.md` for WCAG 2.1 criterion-level detail
-- `references/tools.md` for tooling recommendations
+Load the appropriate reference files:
+- `references/wcag-criteria.md` — web/WCAG criterion detail
+- `references/additional-checks.md` — extra web/product checks when applicable
+- `references/mobile-checklist.md` — Android/iOS/Flutter/React Native
+- `references/desktop-checklist.md` — desktop app static analysis
+- `references/gost-checklist.md` — Russian government/compliance framing
+- `references/tools.md` — deeper verification tooling
+
+Use `references/international-standards.md` only if needed as supplemental context.
 
 ---
 
 ## Step 3: Run the Audit
 
-### For Websites — check ALL of the following:
+### Coverage Strategy
+Choose the best level the environment supports:
+
+#### Level A — zero-setup baseline
+Use available page/source inspection only.
+Deliver a useful static audit immediately.
+
+#### Level B — richer audit
+If browser rendering or local audit tools are available, add:
+- rendered DOM inspection
+- richer evidence for interactive flows
+- stronger confidence on forms, dialogs, menus, tabs, and stateful UI
+
+#### Level C — advanced follow-up
+If the environment supports deeper tooling or the user allows it, add:
+- approved audit CLI tools
+- platform-native lint/test tools
+- broader multi-page or multi-module coverage
+
+Always keep the report honest about which level was reached.
+
+### For Websites — check ALL of the following when possible
 
 #### A. Perceivable
 - [ ] All images have descriptive `alt` text (not empty, not "image", not filename)
-- [ ] Decorative images have `alt=""` and `role="presentation"`
-- [ ] Videos have captions (`<track kind="captions">`)
+- [ ] Decorative images have `alt=""` and `role="presentation"` where appropriate
+- [ ] Videos have captions (`<track kind="captions">`) or equivalent support
 - [ ] Audio has transcripts
-- [ ] Color is NOT the only way to convey information
-- [ ] Text contrast ratio ≥ 4.5:1 (normal), ≥ 3:1 (large text ≥18pt or 14pt bold)
-- [ ] Text can be resized to 200% without horizontal scrolling or loss of content
-- [ ] Page content reflows at 320px width (mobile responsive)
+- [ ] Color is not the only way to convey information
+- [ ] Text contrast appears sufficient; if exact calculation is unavailable, say so
+- [ ] Text can be resized to 200% without loss of content or usability
+- [ ] Page content reflows at narrow/mobile widths
 - [ ] No content flashes more than 3 times per second
 
 #### B. Operable
-- [ ] ALL functionality is keyboard-accessible (Tab, Enter, Space, Arrow keys)
-- [ ] No keyboard traps (user can always Tab away)
-- [ ] Visible focus indicator exists and is clearly visible
-- [ ] Skip navigation link exists ("Skip to main content")
+- [ ] All functionality appears keyboard-accessible
+- [ ] No keyboard traps are evident
+- [ ] Visible focus indicator exists and is clear
+- [ ] Skip navigation link exists where relevant
 - [ ] Page has a meaningful `<title>` tag
-- [ ] Focus order is logical (matches visual reading order)
-- [ ] No time limits, or user can extend/disable them
+- [ ] Focus order is logical
+- [ ] Time limits are absent or adjustable
 - [ ] Moving content can be paused/stopped/hidden
 - [ ] No content auto-navigates without user control
 
 #### C. Understandable
-- [ ] `<html lang="...">` attribute is set correctly
-- [ ] Pages are consistent in navigation and labeling
-- [ ] Forms have descriptive labels for all inputs
-- [ ] Error messages are specific and describe how to fix the error
-- [ ] Instructions don't rely solely on sensory characteristics (color, shape, location)
-- [ ] Abbreviations and jargon are explained
-- [ ] Input purpose is programmatically determinable (autocomplete attributes)
+- [ ] `<html lang="...">` is set correctly
+- [ ] Navigation and labeling are consistent
+- [ ] Forms have descriptive labels
+- [ ] Error messages explain what is wrong and how to fix it
+- [ ] Instructions do not rely only on color, shape, or screen position
+- [ ] Unclear jargon or abbreviations are explained where needed
+- [ ] Input purpose is programmatically determinable where applicable
 
 #### D. Robust
-- [ ] Valid HTML (no broken tags, proper nesting)
-- [ ] ARIA roles, states, properties are used correctly
-- [ ] `aria-label` / `aria-labelledby` / `aria-describedby` are present where needed
-- [ ] No `aria-hidden="true"` on interactive/focusable elements
-- [ ] Buttons and links have accessible names
-- [ ] Form inputs have associated `<label>` (via `for` attribute or wrapping)
-- [ ] `role`, `aria-expanded`, `aria-selected`, `aria-checked` match actual state
+- [ ] HTML structure appears valid and semantically coherent
+- [ ] ARIA roles, states, and properties are used correctly
+- [ ] Accessible names exist where needed
+- [ ] `aria-hidden="true"` is not applied to interactive/focusable elements
+- [ ] Buttons, links, and form controls have usable names
+- [ ] Form inputs have associated labels
+- [ ] State attributes such as `aria-expanded`, `aria-selected`, `aria-checked` match behavior
 
 #### E. Structure & Landmarks
-- [ ] Exactly one `<h1>` per page
-- [ ] Heading hierarchy is correct (h1→h2→h3, no skipping levels)
-- [ ] ARIA landmarks: `<main>`, `<nav>`, `<header>`, `<footer>`, `<aside>` used
-- [ ] Links have descriptive text (not "click here", "read more", "link")
-- [ ] Tables use `<th>` with `scope` attribute, have `<caption>` if needed
-- [ ] Lists use `<ul>`, `<ol>`, `<dl>` semantically
+- [ ] Exactly one `<h1>` per page when appropriate
+- [ ] Heading hierarchy is logical
+- [ ] Landmarks such as `<main>`, `<nav>`, `<header>`, `<footer>`, `<aside>` are used well
+- [ ] Links have descriptive text
+- [ ] Tables use proper headers/captions where needed
+- [ ] Lists are semantically marked up
 
 #### F. Special Elements
-- [ ] iframes have descriptive `title` attribute
-- [ ] PDFs on the site are tagged/accessible (or alt versions provided)
-- [ ] CAPTCHA has audio alternative
-- [ ] Modals/dialogs trap focus correctly and return focus on close
-- [ ] Custom widgets (dropdowns, sliders, tabs) have correct ARIA implementation
+- [ ] iframes have descriptive `title`
+- [ ] PDFs have an accessible alternative or a note about accessibility
+- [ ] CAPTCHA has an accessible alternative
+- [ ] Modals/dialogs manage focus correctly
+- [ ] Custom widgets have appropriate semantics and state handling
 
-### For Mobile App Source Code:
+### For Mobile App Source Code
 
-Load `references/mobile-checklist.md` and apply per-platform checks.
+Use `references/mobile-checklist.md`.
 
-Key things to detect statically:
-- **Android XML layouts**: Missing `android:contentDescription` on ImageView, ImageButton
-- **Android Kotlin/Java**: Missing `setContentDescription()` calls, misuse of `importantForAccessibility`
-- **iOS Swift/SwiftUI**: Missing `.accessibilityLabel()`, incorrect `.accessibilityHidden(true)`
-- **Flutter**: Images without `semanticLabel` or `Semantics` wrapper, `GestureDetector` without Semantics
-- **React Native**: `<Image>` missing `accessibilityLabel`, `<TouchableOpacity>` without label
+Static audit examples:
+- Android: missing `contentDescription`, `labelFor`, misuse of `importantForAccessibility`
+- iOS: missing `accessibilityLabel`, incorrect accessibility hiding, weak traits/roles
+- Flutter: missing `Semantics`, unlabeled images, gesture-only wrappers
+- React Native: missing `accessibilityLabel`, `accessibilityRole`, nested touchables, unclear accessible names
 
-Hard to check statically (note in report):
-- Color contrast (requires rendering)
-- Touch target sizes (requires layout computation)
-- Focus traversal order (requires runtime)
-- Screen reader announcement accuracy (requires device testing)
+Always state that static analysis does **not** fully prove:
+- color contrast
+- touch target size
+- focus traversal order
+- spoken announcements
+- real custom widget behavior with screen readers
 
-### For Desktop App Source Code:
+### For Desktop App Source Code
 
-Load `references/desktop-checklist.md`.
+Use `references/desktop-checklist.md`.
 
-- **Electron**: Treat as web — check HTML/CSS/JS with web checklist
-- **PyQt**: Look for `setAccessibleName()`, `setAccessibleDescription()` calls
-- **wxWidgets**: Look for `SetName()`, `SetHelpText()` calls
-- **WPF/XAML**: Check `AutomationProperties.Name`, `AutomationProperties.HelpText`
+Examples:
+- Electron: treat as web plus app-shell interaction caveats
+- PyQt/PySide: inspect `setAccessibleName()`, `setAccessibleDescription()`, buddies/labels
+- wxWidgets: inspect naming/help text/accessibility hooks
+- WPF/XAML: inspect `AutomationProperties.*`
+- GTK: inspect AT-SPI/Atk exposure where visible from source
 
 ---
 
 ## Step 4: Produce the Report
 
-Structure your report as follows:
+Use this structure:
 
-```
+```md
 ## Accessibility Audit Report
 
 **Target:** [URL / repo / path]
 **Date:** [date]
 **Platform:** [web / Android / iOS / Flutter / React Native / Electron / etc.]
-**Standards checked:** [WCAG 2.1 AA / GOST R 52872-2019 / Mincifry Checklist]
+**Audit depth:** [Level A / B / C]
+**Standards checked:** [WCAG 2.1 AA / WCAG 2.2 notes / GOST R 52872-2019 / etc.]
 
 ---
 
@@ -197,57 +296,64 @@ Overall assessment: [1-2 sentence summary]
 
 ---
 
+### Coverage
+
+- What was checked
+- What was not checked
+- Which capabilities or tools were available
+- Which checks remain lower-confidence because of environment limits
+
+---
+
 ### Critical Issues (must fix)
 
 **[Category]**
 - Issue: [description]
-  Element: [tag/selector/code snippet if found]
+  Evidence: [element / selector / file / code pattern]
   WCAG criterion: [e.g., 1.1.1 Non-text Content]
   Fix: [specific recommendation]
-
-[repeat for each critical issue]
 
 ---
 
 ### Warnings (should fix)
 
-[same format as above]
+[same format]
 
 ---
 
 ### Informational (good to know)
 
-[same format as above]
+[same format]
 
 ---
 
 ### Passed Checks
 
-[List what was checked and found to be OK]
+[List what was checked and found acceptable]
 
 ---
 
-### GOST / Mincifry Compliance (if applicable)
+### Compliance Mapping
 
-[Map findings to the official Russian checklist items from references/gost-checklist.md]
-
----
-
-### What Cannot Be Checked Statically
-
-[For mobile/desktop: list what requires device/runtime testing]
+[Map findings to GOST / Mincifry when relevant, otherwise keep to WCAG mapping]
 
 ---
 
-### Recommended Tools for Deeper Testing
+### What Requires Runtime or Manual Testing
 
-[From references/tools.md — platform-appropriate tools]
+[List what static analysis could not prove]
+
+---
+
+### Recommended Deeper Verification
+
+[List tools or manual checks from the approved references/tools set]
 
 ---
 
 ### Next Steps
 
-1. [Prioritized action items]
+1. [Highest-priority fix]
 2. ...
 ```
 
@@ -258,10 +364,10 @@ Overall assessment: [1-2 sentence summary]
 Calculate score as: `max(0, 100 - deductions)`
 
 | Severity  | Deduction per issue |
-|-----------|-------------------|
-| Critical  | 10 points         |
-| Warning   | 5 points          |
-| Info      | 1 point           |
+|-----------|---------------------|
+| Critical  | 10 points           |
+| Warning   | 5 points            |
+| Info      | 1 point             |
 
 Grade scale:
 - 90-100: A (Excellent)
@@ -274,30 +380,35 @@ Grade scale:
 
 ## Important Notes
 
-### On Mobile/Desktop Apps — Honesty is Required
-Static source code analysis can find ~40-60% of accessibility issues.
-The following ALWAYS require running the actual app + screen reader:
-- Actual screen reader behavior
-- Color contrast (needs rendering)
-- Touch target sizes
-- Focus traversal order
-- Dynamic content announcements
-- Custom component behavior
+### Graceful Degradation
+If the environment cannot support browser rendering, local source search, or richer audit tooling:
+- continue with the best partial audit possible
+- explicitly state the missing coverage
+- recommend the smallest relevant next-step tools from `references/tools.md`
 
-Always state this clearly in the report.
+### Honesty for Native Apps
+Static analysis often finds roughly 40-60% of accessibility issues in native apps.
+The following usually require running the real app with assistive technology:
+- real screen reader announcements
+- color contrast in rendered UI
+- touch target sizes
+- focus traversal order
+- dynamic announcements
+- behavior of custom components
 
-### On Russian Standards
-Russian government sites are governed by:
-1. GOST R 52872-2019 (based on WCAG 2.1)
-2. Mincifry order (Приказ Минцифры) — see `references/gost-checklist.md`
+Always say this clearly.
 
-These mostly map to WCAG 2.1 AA requirements with some specific additions.
+### Russian Standards
+For Russian public-sector or compliance-sensitive targets, map findings against:
+1. GOST R 52872-2019
+2. relevant Mincifry requirements from `references/gost-checklist.md`
 
-### On Completeness
-If the target is large (many pages/files), focus on:
-1. Main page / entry points
-2. Key user flows (login, main functionality)
-3. Any forms or interactive elements
-4. Navigation structure
+### Large Targets
+If the target is large, prioritize:
+1. main page / entry points
+2. key user flows
+3. forms and interactive elements
+4. navigation structure
+5. representative templates or reusable components
 
-State what was and wasn't checked.
+State what was and was not covered.
