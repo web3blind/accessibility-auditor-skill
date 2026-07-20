@@ -19,4 +19,5 @@ The references here define **what to check**, not vendor-specific tool calls.
 | mobile-checklist.md | Mobile app static analysis - Android, iOS, Flutter, React Native |
 | desktop-checklist.md | Desktop app static analysis - Electron, WPF, PyQt, wxWidgets, GTK |
 | tools.md | Recommended deeper-testing tools by platform |
+| open-github-a11y-pr-cases.md | Workflow for turning public accessibility issues into narrow upstream PRs, with a rendering-path verification gate |
 | international-standards.md | Supplemental international standards note |

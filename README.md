@@ -113,6 +113,7 @@ accessibility-auditor-skill/
     ├── gost-checklist.md
     ├── international-standards.md
     ├── mobile-checklist.md
+    ├── open-github-a11y-pr-cases.md
     ├── tools.md
     └── wcag-criteria.md
 ```

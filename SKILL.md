@@ -154,6 +154,7 @@ Load the appropriate reference files:
 - `references/desktop-checklist.md` — desktop app static analysis
 - `references/gost-checklist.md` — Russian government/compliance framing
 - `references/tools.md` — deeper verification tooling
+- `references/open-github-a11y-pr-cases.md` — turning a public accessibility issue into a small upstream PR, including the rendering-path verification gate
 
 Use `references/international-standards.md` only if needed as supplemental context.
 
