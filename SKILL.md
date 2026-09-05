@@ -39,6 +39,13 @@ It should describe **what to inspect and what to report**, not depend on one ven
 5. **Always report what was checked, what was not checked, and why.**
 6. **For native mobile/desktop apps, be explicit that static analysis is partial.**
 
+## Privacy and PR boundaries
+
+- Inspect private source locally by default. Do not upload source trees, audit snapshots, or extracted private code to a hosted service without explicit authorization. For organizational remote use, prefer a reviewed self-hosted path.
+- Keep audit/fix work separate from content or promotion. A code audit does not imply permission to publish findings, case studies, or social posts.
+- For upstream fixes, distinguish reproducible code defects from external merge gates such as required review, deployment authorization, or team approval.
+- Verify the affected rendering path and report precise file/element evidence. Static findings and an automated score are not screen-reader verification or compliance certification.
+
 ## Capability Model
 
 When this skill says to inspect something, the runtime may satisfy that with different tools. Think in capabilities:
